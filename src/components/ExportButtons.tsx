@@ -6,6 +6,8 @@ interface ExportButtonsProps {
   sellOutHl: number;
   sellInHl: number;
   desiredLos: number;
+  pendingOrders: number;
+  receivedStock: number;
   result: LOSResult;
 }
 
@@ -13,6 +15,8 @@ export function ExportButtons({
   sellOutHl,
   sellInHl,
   desiredLos,
+  pendingOrders,
+  receivedStock,
   result,
 }: ExportButtonsProps) {
   const handleExportPDF = async () => {
@@ -21,6 +25,8 @@ export function ExportButtons({
         sellOutHl,
         sellInHl,
         desiredLos,
+        pendingOrders,
+        receivedStock,
         result,
         timestamp: new Date(),
       });
@@ -36,6 +42,8 @@ export function ExportButtons({
         sellOutHl,
         sellInHl,
         desiredLos,
+        pendingOrders,
+        receivedStock,
         result,
         timestamp: new Date(),
       });

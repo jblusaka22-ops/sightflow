@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTheme } from './context/ThemeContext';
 import { Header } from './components/Header';
 import { InputCard } from './components/InputCard';
 import { InfoCard } from './components/InfoCard';
@@ -12,6 +13,7 @@ import { Footer } from './components/Footer';
 import { calculateLOS } from './utils/calculations';
 
 export default function App() {
+  const { isDarkMode } = useTheme();
   const [sellOutHl, setSellOutHl] = useState<string>('');
   const [sellInHl, setSellInHl] = useState<string>('');
   const [desiredLos, setDesiredLos] = useState<string>('');
@@ -37,7 +39,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50">
+    <div className={`min-h-screen transition-colors duration-500 ${
+      isDarkMode
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
+        : 'bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50'
+    }`}>
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
@@ -80,6 +86,8 @@ export default function App() {
                   sellOutHl={parseFloat(sellOutHl)}
                   sellInHl={parseFloat(sellInHl)}
                   desiredLos={parseFloat(desiredLos)}
+                  pendingOrders={parseFloat(pendingOrders) || 0}
+                  receivedStock={parseFloat(receivedStock) || 0}
                   result={result}
                 />
               </>
