@@ -127,8 +127,12 @@ export async function exportPDF(data: {
   }
 
   if (data.pendingOrders > 0) {
+    const HECTOLITER_TO_CASE = 0.09;
+    const adjustedSellOutHl = data.result.adjustedSellOut * HECTOLITER_TO_CASE;
     scenarioItems.push(
+      { label: 'Pending Orders', value: `${data.pendingOrders.toFixed(0)} cases`, highlight: false },
       { label: 'Adjusted Demand (with orders)', value: `${data.result.adjustedSellOut.toFixed(0)} cases`, highlight: false },
+      { label: 'Adjusted Demand in hl', value: `${adjustedSellOutHl.toFixed(2)} hl`, highlight: false },
       { label: 'Predicted Coverage (with orders)', value: `${data.result.predictedLos.toFixed(2)}%`, highlight: true }
     );
   }

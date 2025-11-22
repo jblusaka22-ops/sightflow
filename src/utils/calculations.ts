@@ -27,7 +27,7 @@ export interface LOSResult {
 export function calculateLOS(data: LOSData): LOSResult {
   const { sellOutHl, sellInHl, desiredLos, pendingOrders, receivedStock } = data;
 
-  if (!sellOutHl || !sellInHl) {
+  if (!sellOutHl || !sellInHl || sellInHl === 0) {
     return getEmptyResult();
   }
 
@@ -35,33 +35,40 @@ export function calculateLOS(data: LOSData): LOSResult {
   const sellInCases = sellInHl / HECTOLITER_TO_CASE;
   const currentLos = (sellOutHl / sellInHl) * 100;
 
-  const casesNeeded = desiredLos > 0 ? (desiredLos * sellInCases) / 100 - sellOutCases : 0;
-  const newSellOutHl = desiredLos > 0 ? (casesNeeded * HECTOLITER_TO_CASE) + sellOutHl : sellOutHl;
+  let casesNeeded = 0;
+  let newSellOutHl = sellOutHl;
+  let losAfterSelling = currentLos;
+
+  if (desiredLos > 0) {
+    casesNeeded = (desiredLos * sellInCases) / 100 - sellOutCases;
+    newSellOutHl = (casesNeeded * HECTOLITER_TO_CASE) + sellOutHl;
+    losAfterSelling = (newSellOutHl / sellInHl) * 100;
+  }
+
   const newSellOutCases = newSellOutHl / HECTOLITER_TO_CASE;
-  const losAfterSelling = (newSellOutHl / sellInHl) * 100;
 
   const newSellInHl = receivedStock > 0 ? (receivedStock * HECTOLITER_TO_CASE) + sellInHl : sellInHl;
   const newSellInCases = newSellInHl / HECTOLITER_TO_CASE;
-  const losAfterReceiving = (sellOutHl / newSellInHl) * 100;
+  const losAfterReceiving = newSellInHl > 0 ? (sellOutHl / newSellInHl) * 100 : 0;
 
   const adjustedSellOut = sellOutCases + pendingOrders;
-  const predictedLos = (adjustedSellOut / sellInCases) * 100;
+  const predictedLos = sellInCases > 0 ? (adjustedSellOut / sellInCases) * 100 : 0;
 
   const losStatus = getLosStatus(currentLos);
 
   return {
-    currentLos,
+    currentLos: isFinite(currentLos) ? currentLos : 0,
     sellOutCases,
     sellInCases,
-    casesNeeded,
-    newSellOutHl,
-    newSellOutCases,
-    losAfterSelling,
+    casesNeeded: isFinite(casesNeeded) ? casesNeeded : 0,
+    newSellOutHl: isFinite(newSellOutHl) ? newSellOutHl : sellOutHl,
+    newSellOutCases: isFinite(newSellOutCases) ? newSellOutCases : 0,
+    losAfterSelling: isFinite(losAfterSelling) ? losAfterSelling : 0,
     newSellInHl,
     newSellInCases,
-    losAfterReceiving,
-    adjustedSellOut,
-    predictedLos,
+    losAfterReceiving: isFinite(losAfterReceiving) ? losAfterReceiving : 0,
+    adjustedSellOut: isFinite(adjustedSellOut) ? adjustedSellOut : 0,
+    predictedLos: isFinite(predictedLos) ? predictedLos : 0,
     losStatus,
   };
 }

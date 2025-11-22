@@ -1,11 +1,13 @@
 import { TrendingUp } from 'lucide-react';
 import { LOSResult } from '../utils/calculations';
+import { useTheme } from '../context/ThemeContext';
 
 interface ResultsPanelProps {
   result: LOSResult;
 }
 
 export function ResultsPanel({ result }: ResultsPanelProps) {
+  const { isDarkMode } = useTheme();
   const currentStats = [
     {
       label: 'Current Demand',
@@ -68,29 +70,51 @@ export function ResultsPanel({ result }: ResultsPanelProps) {
     <div
       className={`p-4 rounded-lg border-2 transition-all hover:shadow-md ${
         stat.highlight
-          ? 'bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-300 shadow-md'
+          ? isDarkMode
+            ? 'bg-gradient-to-br from-slate-700 to-slate-600 border-cyan-500/30 shadow-md'
+            : 'bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-300 shadow-md'
+          : isDarkMode
+          ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500'
           : 'bg-slate-50 border-slate-200 hover:border-slate-300'
       }`}
     >
-      <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide mb-1">{stat.label}</p>
-      <p className={`text-2xl font-bold ${stat.highlight ? 'text-cyan-700' : 'text-slate-900'}`}>
+      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
+        isDarkMode ? 'text-slate-400' : 'text-slate-600'
+      }`}>{stat.label}</p>
+      <p className={`text-2xl font-bold ${
+        stat.highlight
+          ? isDarkMode ? 'text-cyan-400' : 'text-cyan-700'
+          : isDarkMode ? 'text-slate-100' : 'text-slate-900'
+      }`}>
         {stat.value}
       </p>
-      <p className="text-xs text-slate-500 mt-1">{stat.unit}</p>
+      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{stat.unit}</p>
     </div>
   );
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 sm:p-8 border border-teal-100 animate-slideUp space-y-6">
+    <div className={`backdrop-blur-sm rounded-xl shadow-xl p-6 sm:p-8 border animate-slideUp space-y-6 transition-all duration-300 ${
+      isDarkMode
+        ? 'bg-slate-800/90 border-slate-700'
+        : 'bg-white/90 border-teal-100'
+    }`}>
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-lg">
-          <TrendingUp size={24} className="text-teal-600" />
+        <div className={`p-2 rounded-lg transition-all duration-300 ${
+          isDarkMode
+            ? 'bg-gradient-to-br from-slate-700 to-slate-600'
+            : 'bg-gradient-to-br from-teal-100 to-cyan-100'
+        }`}>
+          <TrendingUp size={24} className={isDarkMode ? 'text-cyan-400' : 'text-teal-600'} />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">Performance Analysis</h2>
+        <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+          Performance Analysis
+        </h2>
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Today's Metrics</h3>
+        <h3 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${
+          isDarkMode ? 'text-slate-300' : 'text-slate-700'
+        }`}>Today's Metrics</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {currentStats.map((stat, idx) => (
             <StatCard key={idx} stat={stat} />
@@ -98,8 +122,10 @@ export function ResultsPanel({ result }: ResultsPanelProps) {
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-6">
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Selling Scenario</h3>
+      <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <h3 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${
+          isDarkMode ? 'text-slate-300' : 'text-slate-700'
+        }`}>Selling Scenario</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sellingStats.map((stat, idx) => (
             <StatCard key={idx} stat={stat} />
@@ -107,8 +133,10 @@ export function ResultsPanel({ result }: ResultsPanelProps) {
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-6">
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Receiving Scenario</h3>
+      <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <h3 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${
+          isDarkMode ? 'text-slate-300' : 'text-slate-700'
+        }`}>Receiving Scenario</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {receivingStats.map((stat, idx) => (
             <StatCard key={idx} stat={stat} />
