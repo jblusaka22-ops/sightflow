@@ -1,5 +1,10 @@
 const HECTOLITER_TO_CASE = 0.09;
 
+const sanitizeNumber = (value: number): number => {
+  if (!isFinite(value) || isNaN(value)) return 0;
+  return Math.abs(value) < 0.0001 ? 0 : value;
+};
+
 export interface LOSData {
   sellOutHl: number;
   sellInHl: number;
@@ -22,55 +27,68 @@ export interface LOSResult {
   adjustedSellOut: number;
   predictedLos: number;
   losStatus: 'critical' | 'optimal' | 'caution' | 'high';
+  desiredLos: number;
 }
 
 export function calculateLOS(data: LOSData): LOSResult {
   const { sellOutHl, sellInHl, desiredLos, pendingOrders, receivedStock } = data;
 
-  if (!sellOutHl || !sellInHl || sellInHl === 0) {
+  if (!sellOutHl || sellOutHl <= 0 || !sellInHl || sellInHl <= 0) {
     return getEmptyResult();
   }
 
-  const sellOutCases = sellOutHl / HECTOLITER_TO_CASE;
-  const sellInCases = sellInHl / HECTOLITER_TO_CASE;
-  const currentLos = (sellOutHl / sellInHl) * 100;
+  try {
+    const sellOutCases = sanitizeNumber(sellOutHl / HECTOLITER_TO_CASE);
+    const sellInCases = sanitizeNumber(sellInHl / HECTOLITER_TO_CASE);
+    const currentLos = sanitizeNumber((sellOutHl / sellInHl) * 100);
 
-  let casesNeeded = 0;
-  let newSellOutHl = sellOutHl;
-  let losAfterSelling = currentLos;
+    let casesNeeded = 0;
+    let newSellOutHl = sellOutHl;
+    let losAfterSelling = currentLos;
 
-  if (desiredLos > 0) {
-    casesNeeded = (desiredLos * sellInCases) / 100 - sellOutCases;
-    newSellOutHl = (casesNeeded * HECTOLITER_TO_CASE) + sellOutHl;
-    losAfterSelling = (newSellOutHl / sellInHl) * 100;
+    if (desiredLos > 0 && sellInCases > 0) {
+      casesNeeded = sanitizeNumber((desiredLos * sellInCases) / 100 - sellOutCases);
+      newSellOutHl = sanitizeNumber((casesNeeded * HECTOLITER_TO_CASE) + sellOutHl);
+      losAfterSelling = sanitizeNumber((newSellOutHl / sellInHl) * 100);
+    }
+
+    const newSellOutCases = sanitizeNumber(newSellOutHl / HECTOLITER_TO_CASE);
+
+    const newSellInHl = receivedStock > 0
+      ? sanitizeNumber((receivedStock * HECTOLITER_TO_CASE) + sellInHl)
+      : sellInHl;
+    const newSellInCases = sanitizeNumber(newSellInHl / HECTOLITER_TO_CASE);
+    const losAfterReceiving = newSellInHl > 0
+      ? sanitizeNumber((sellOutHl / newSellInHl) * 100)
+      : 0;
+
+    const adjustedSellOut = sanitizeNumber(sellOutCases + pendingOrders);
+    const predictedLos = sellInCases > 0
+      ? sanitizeNumber((adjustedSellOut / sellInCases) * 100)
+      : 0;
+
+    const losStatus = getLosStatus(currentLos);
+
+    return {
+      currentLos,
+      sellOutCases,
+      sellInCases,
+      casesNeeded,
+      newSellOutHl,
+      newSellOutCases,
+      losAfterSelling,
+      newSellInHl,
+      newSellInCases,
+      losAfterReceiving,
+      adjustedSellOut,
+      predictedLos,
+      losStatus,
+      desiredLos,
+    };
+  } catch (error) {
+    console.error('Calculation error:', error);
+    return getEmptyResult();
   }
-
-  const newSellOutCases = newSellOutHl / HECTOLITER_TO_CASE;
-
-  const newSellInHl = receivedStock > 0 ? (receivedStock * HECTOLITER_TO_CASE) + sellInHl : sellInHl;
-  const newSellInCases = newSellInHl / HECTOLITER_TO_CASE;
-  const losAfterReceiving = newSellInHl > 0 ? (sellOutHl / newSellInHl) * 100 : 0;
-
-  const adjustedSellOut = sellOutCases + pendingOrders;
-  const predictedLos = sellInCases > 0 ? (adjustedSellOut / sellInCases) * 100 : 0;
-
-  const losStatus = getLosStatus(currentLos);
-
-  return {
-    currentLos: isFinite(currentLos) ? currentLos : 0,
-    sellOutCases,
-    sellInCases,
-    casesNeeded: isFinite(casesNeeded) ? casesNeeded : 0,
-    newSellOutHl: isFinite(newSellOutHl) ? newSellOutHl : sellOutHl,
-    newSellOutCases: isFinite(newSellOutCases) ? newSellOutCases : 0,
-    losAfterSelling: isFinite(losAfterSelling) ? losAfterSelling : 0,
-    newSellInHl,
-    newSellInCases,
-    losAfterReceiving: isFinite(losAfterReceiving) ? losAfterReceiving : 0,
-    adjustedSellOut: isFinite(adjustedSellOut) ? adjustedSellOut : 0,
-    predictedLos: isFinite(predictedLos) ? predictedLos : 0,
-    losStatus,
-  };
 }
 
 function getLosStatus(los: number): 'critical' | 'optimal' | 'caution' | 'high' {
@@ -95,6 +113,7 @@ function getEmptyResult(): LOSResult {
     adjustedSellOut: 0,
     predictedLos: 0,
     losStatus: 'optimal',
+    desiredLos: 0,
   };
 }
 
